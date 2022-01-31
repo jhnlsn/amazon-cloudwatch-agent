@@ -53,6 +53,10 @@ var schema = `{
           "description": "Specifies running the CloudWatch agent with debug log messages",
           "type": "boolean"
         },
+        "aws_sdk_log_level": {
+          "description": "Specifies running the CloudWatch agent with AWS SDK debug logging. Multiple options must be separated by vertical bars.",
+          "type": "string"
+        },
         "credentials": {
           "description": "The credentials with which agent can access aws resources",
           "$ref": "#/definitions/credentialsDefinition"
@@ -685,6 +689,12 @@ var schema = `{
                   },
                   "retention_in_days": {
                     "$ref": "#/definitions/logsDefinition/definitions/retentionInDaysDefinition"
+                  },
+                  "filters": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/definitions/logsDefinition/definitions/filterDefinition"
+                    }
                   }
                 },
                 "required": [
@@ -802,6 +812,25 @@ var schema = `{
             1827,
             3653
           ]
+        },
+        "filterDefinition": {
+          "type": "object",
+          "descriptions": "Define filters to apply to the log messages in this log file to determine whether to publish the message or not",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "description": "Declares if the specified filter should be used to include or exclude log messages",
+              "type": "string",
+              "enum": [
+                "include",
+                "exclude"
+              ]
+            },
+            "expression": {
+              "description": "Regular expression to apply to the log message",
+              "type": "string"
+            }
+          }
         }
       }
     },

@@ -4,16 +4,27 @@ on:
   push:
     branches:
       - master
+
+    paths-ignore:
+      - '**.md'
+      - '.github/**'
+      - '!.github/workflows/build-*'
+      
+
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
 
-jobs:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
 
+jobs:
   build:
     name: Build
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
         include:
@@ -21,10 +32,12 @@ jobs:
             cachepath: |
               ~/.cache/go-build
               ~/go/pkg/mod
+              /home/runner/.cache/go-build
           - os: macos-latest
             cachepath: |
               ~/Library/Caches/go-build
               ~/go/pkg/mod
+              /Users/runner/Library/Caches/go-build
     steps:  
 
     - name: Set up Go 1.x
@@ -39,13 +52,11 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v2
       with:
-        path: amazon-cloudwatch-agent
         fetch-depth: 0
         submodules: 'true'
 
     - name: Debug go.mod
       run: cat go.mod
-      working-directory: amazon-cloudwatch-agent
 
     - name: Cache build output
       uses: actions/cache@v2
@@ -57,14 +68,11 @@ jobs:
 
     - name: Test
       run: make test
-      working-directory: amazon-cloudwatch-agent
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v2
       with:
         verbose: true
-        directory: ./amazon-cloudwatch-agent/
 
     - name: Build
       run: make build
-      working-directory: amazon-cloudwatch-agent
